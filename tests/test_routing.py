@@ -163,3 +163,18 @@ class test_routing(unittest.TestCase):
                 self.app.config['CAS_ATTRIBUTES_SESSION_KEY'] not in flask.session)
             self.assertTrue(
                 self.app.config['CAS_TOKEN_SESSION_KEY'] not in flask.session)
+
+    @mock.patch.object(routing, 'urlopen',
+                       return_value=io.BytesIO(b'\n\n'))
+    @mock.patch.object(routing, 'parse',
+                       return_value={
+                           "cas:serviceResponse": {
+                               "cas:authenticationSuccess": {
+                                   "cas:user": "bob"
+                               }
+                           }
+                       })
+    def test_attributes_missing_from_cas_validation_response(self, m, n):
+        with self.app.test_request_context('/login/'):
+            ticket = '12345-abcdefg-cas'
+            self.assertEqual(routing.validate(ticket), True)
